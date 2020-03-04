@@ -34,6 +34,14 @@ ip link set dev gre0 xdp off
 
 Note that this command must be invoked every time a new GRE tunnel is set up.
 
+## Debugging
+
+Anything printed out by `bpf_printk` can be viewed by:
+
+```shell
+cat /sys/kernel/debug/tracing/trace_pipe
+```
+
 ## References
 
 Here's a list of awesome articles and projects I found useful:
