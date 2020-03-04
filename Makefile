@@ -22,7 +22,7 @@ BPF_CFLAGS ?= -I$(LIBBPF_DIR)/build/usr/include/ -I../headers/
 
 LIBS = -l:libbpf.a -lelf $(USER_LIBS)
 
-all: llvm-check $(USER_TARGETS) $(XDP_OBJ) $(COPY_LOADER) $(COPY_STATS)
+all: llvm-check $(XDP_OBJ)
 
 .PHONY: clean $(CLANG) $(LLC)
 
@@ -51,7 +51,7 @@ $(OBJECT_LIBBPF):
 		mkdir -p build; DESTDIR=build $(MAKE) install_headers; \
 	fi
 
-$(XDP_OBJ): %.o: %.c  $(OBJECT_LIBBPF) Makefile $(COMMON_MK) $(COMMON_OBJS) $(KERN_USER_H) $(EXTRA_DEPS)
+$(XDP_OBJ): %.o: %.c  $(OBJECT_LIBBPF) Makefile $(EXTRA_DEPS)
 	$(CLANG) -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
