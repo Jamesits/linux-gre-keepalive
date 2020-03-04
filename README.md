@@ -4,7 +4,7 @@ This eBPF program adds high-performance reply-only GRE keepalive support for Lin
 
 ## Usage
 
-### Install Build Dependencies
+### Build Dependencies
 
 Debian:
 
@@ -26,17 +26,24 @@ Assume you have set up the GRE tunnel as `gre0`. To enable GRE keepalive:
 ip link set dev gre0 xdp object gre_keepalive.o
 ```
 
+Note that this command must be invoked every time a new GRE tunnel is set up.
+
 To disable it:
 
 ```shell
 ip link set dev gre0 xdp off
 ```
 
-Note that this command must be invoked every time a new GRE tunnel is set up.
-
 ## Debugging
 
-Anything printed out by `bpf_printk` can be viewed by:
+Enabling debugging output:
+
+```c
+#define DEBUG
+#define DEBUG_PRINT_HEADER_SIZE 32
+```
+
+Then view debug output after enabling it by:
 
 ```shell
 cat /sys/kernel/debug/tracing/trace_pipe
