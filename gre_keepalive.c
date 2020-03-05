@@ -81,8 +81,7 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 	// So we skip the first 12 bytes and verify ethernet proto field and IPv6 header version field
 	if ((dataptr + 15) > data_end) goto out;
 	if (
-		((__u8 *)dataptr)[12] == 0x86
-		&& ((__u8 *)dataptr)[13] == 0xdd
+		((__u16 *)dataptr)[6] == 0xdd86
 		&& (((__u8 *)dataptr)[14] & 0xF0) == 0x60
 		) {
 		outer_ip_type = 6;
