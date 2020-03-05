@@ -59,16 +59,28 @@ cat /sys/kernel/debug/tracing/trace_pipe
 
 ## Compatiblity
 
-This program has been verified to work with the following systems.
+### Cisco
 
-GRE4:
-* Cisco IOS XE
-* MikroTik RouterOS
+On Cisco IOS XE, you must explicitly configure an ip address or an ipv6 address to make the GRE tunnel actually send something. If you don't configure IP addresses, `debug tunnel keepalive` will still show keepalive packets being sent, but the other end won't receive anything. A valid configuration example:
 
-GRE6:
-* MikroTik RouterOS
+```
+interface Tunnel10
+ ip address 10.0.0.1 255.255.255.0
+ keepalive 1 2
+ tunnel source GigabitEthernet1
+ tunnel destination your.other.end.ip.address
+ tunnel mode gre ip
+```
 
-([Cisco](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29) and [Juniper](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html) doesn't support GRE6 keepalives.)
+Keepalive over GRE IPv6 is ([not supported](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29) by IOS XE.
+
+### Juniper
+
+Keepalive over GRE IPv6 is [not supported](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html) by JunOS.
+
+### MikroTik
+
+RouterOS implements their own GRE IPv6 keepalive with inner GRE header's proto field set to `0x86dd`. This have been implemented by us.
 
 ## References
 
