@@ -72,7 +72,7 @@ interface Tunnel10
  tunnel mode gre ip
 ```
 
-Keepalive over GRE IPv6 is ([not supported](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29) by IOS XE.
+Keepalive over GRE IPv6 is [not supported](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29) by IOS XE.
 
 ### Juniper
 
