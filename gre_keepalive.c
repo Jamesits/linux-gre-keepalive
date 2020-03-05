@@ -85,7 +85,7 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 		&& (((__u8 *)dataptr)[14] & 0xF0) == 0x60
 		) {
 		outer_ip_type = 6;
-		dataptr += 14;
+		dataptr += 14; // skip to the IPv6 header
 	} else if ((((__u8 *)dataptr)[0] & 0xF0) == 0x40) {
 		// if the packet is from GREv4 (tunnel mode gre), then it starts straight with IP header
 		outer_ip_type = 4;
