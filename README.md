@@ -38,6 +38,12 @@ make all
 
 ### Debugging
 
+View compiled bytecode:
+
+```shell
+llvm-objdump -S gre_keepalive.o
+```
+
 Enabling debugging output:
 
 ```c
