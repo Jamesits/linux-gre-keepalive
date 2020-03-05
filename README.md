@@ -57,6 +57,19 @@ Then view debug output after enabling it by:
 cat /sys/kernel/debug/tracing/trace_pipe
 ```
 
+## Compatiblity
+
+This program has been verified to work with the following systems.
+
+GRE4:
+* Cisco IOS XE
+* MikroTik RouterOS
+
+GRE6:
+* MikroTik RouterOS
+
+([Cisco](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29) and [Juniper](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html) doesn't support GRE6 keepalives.)
+
 ## References
 
 Here's a list of awesome articles and projects I found useful:
