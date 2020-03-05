@@ -2,22 +2,6 @@
 
 This eBPF program adds high-performance reply-only GRE keepalive support for Linux kernel.
 
-## Building
-
-### Dependencies
-
-Debian:
-
-```shell
-sudo apt install clang llvm libelf-dev gcc-multilib linux-headers-$(dpkg --print-architecture)
-```
-
-### Building the eBPF program
-
-```shell
-make all
-```
-
 ## Usage
 
 Assume you have set up the GRE tunnel as `gre0`. To enable GRE keepalive:
@@ -34,7 +18,25 @@ To disable it without removing the tunnel interface:
 ip link set dev gre0 xdp off
 ```
 
-## Debugging
+Loading this program on other types of interfaces is undefined behavior.
+
+## Building
+
+### Dependencies
+
+Debian:
+
+```shell
+sudo apt install clang llvm libelf-dev gcc-multilib linux-headers-$(dpkg --print-architecture)
+```
+
+### Building the eBPF program
+
+```shell
+make all
+```
+
+### Debugging
 
 Enabling debugging output:
 

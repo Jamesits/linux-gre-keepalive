@@ -19,10 +19,6 @@
 // enable packet header dump
 // #define DEBUG_PRINT_HEADER_SIZE 32
 
-#ifndef memcpy
-#define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
-#endif
-
 char _license[4] SEC("license") = "GPL";
 
 struct gre_hdr {
@@ -42,14 +38,15 @@ static __always_inline bool compare_ipv6_address(struct in6_addr *a, struct in6_
 SEC("prog")
 int xdp_gre_keepalive_func(struct xdp_md *ctx)
 {
+	// for border checking
+	void *data_start = (void *)(long)ctx->data;
 	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
 
 	// result
 	__u32 action = XDP_PASS;
 
-	// current parsed header pointer
-	void *dataptr = data;
+	// current parsed header position pointer
+	void *dataptr = data_start;
 
 	#ifdef DEBUG
 		bpf_printk("New packet\n");
@@ -57,66 +54,78 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 
 	// debug print packet header
 	#if (defined DEBUG_PRINT_HEADER_SIZE) && (DEBUG_PRINT_HEADER_SIZE > 0)
-	if ((dataptr + DEBUG_PRINT_HEADER_SIZE) > data_end) return -1;
-	char *data_raw = (char *)dataptr;
-	bpf_printk("Packet header dump:\n");
-	#pragma unroll
-	for (int i = 0; i < DEBUG_PRINT_HEADER_SIZE; ++i) {
-		bpf_printk("#%d: %x\n", i, data_raw[i]);
-	}
+		// check for out of boarder access is necessary, kernel will run static analysis on our program
+		if ((dataptr + DEBUG_PRINT_HEADER_SIZE) > data_end) {
+			bpf_printk("Packet size too small, dump failed\n");
+			goto out;
+		}
+		__u8 *data_raw = (__u8 *)dataptr;
+		bpf_printk("Packet header dump:\n");
+		#pragma unroll
+		for (int i = 0; i < DEBUG_PRINT_HEADER_SIZE; ++i) {
+			bpf_printk("#%d: %x\n", i, data_raw[i]);
+		}
 	#endif
 
 	// decide if this is an IP packet or an IPv6 packet
-	// to do this, we check the second byte of the packet
-	
-	char outer_ip_type = 0;
+	// to do this, we check the first byte of the packet
+	__u8 outer_ip_type = 0;
 	struct iphdr *outer_iphdr;
 	struct ipv6hdr *outer_ipv6hdr;
 
 	// if the packet is from GREv4 (tunnel mode gre), then it starts straight with IP header
 	if ((dataptr + 1) > data_end) return -1;
-	if ((((char *)dataptr)[0] & 0xF0) == 0x40) {
+	if ((((__u8 *)dataptr)[0] & 0xF0) == 0x40) {
 		outer_ip_type = 4;
 	} else {
-		// if the packet is from GREv6 (tunnel mode ip6gre), then it starts with
-		//
-		// dst MAC address (6 bytes)
-		// src MAC address (6 bytes)
-		// ethernet proto (0x86dd, 2 bytes)
-		// IPv6 header
-		//
-		// so we skip the first 15 bytes
+		// if the packet is from GREv6 (tunnel mode ip6gre), then it starts with an ethernet header:
+		// * dst MAC address (6 bytes)
+		// * src MAC address (6 bytes)
+		// * ethernet proto (0x86dd, 2 bytes)
+		// Then comes IPv6 header.
+		// So we skip the first 12 bytes and verify ethernet proto field and IPv6 header version field
 		if ((dataptr + 15) > data_end) goto out;
-		dataptr += 14;
-		if ((((char *)dataptr)[0] & 0xF0) == 0x60) {
+		dataptr += 12;
+		if (
+			((__u8 *)dataptr)[0] == 0x86
+			&& ((__u8 *)dataptr)[1] == 0xdd
+			&& (((__u8 *)dataptr)[2] & 0xF0) == 0x60
+			) {
 			outer_ip_type = 6;
 		}
+		dataptr += 2;
 	}
 
+	#ifdef DEBUG
+		bpf_printk("Outer ip type=%x\n", outer_ip_type);
+	#endif
+
+	// note: any bpf_printk inside this switch statement will make kernel static check fail
+	// and I don't know why, so they are commented out
 	switch (outer_ip_type) {
 		case 4:
 			// outer tunnel is GRE4
-			#ifdef DEBUG
-				bpf_printk("Outer GRE4\n");
-			#endif
-			if (dataptr + sizeof(struct iphdr) > data_end) return -1; // necessary for bypassing kernel access violation check
+			// #ifdef DEBUG
+			// 	bpf_printk("Outer GRE4\n");
+			// #endif
+			if (dataptr + sizeof(struct iphdr) > data_end) return -1;
 			outer_iphdr = (struct iphdr *)dataptr;
 			dataptr += sizeof(struct iphdr);
 			break;
 		case 6:
 			// outer tunnel is GRE6
-			#ifdef DEBUG
-				bpf_printk("Outer GRE6\n");
-			#endif
+			// #ifdef DEBUG
+			// 	bpf_printk("Outer GRE6\n");
+			// #endif
 			if (dataptr + sizeof(struct ipv6hdr) > data_end) return -1;
 			outer_ipv6hdr = (struct ipv6hdr *)dataptr;
 			dataptr += sizeof(struct ipv6hdr);
 			break;
 		default:
 			// unknown packet type
-			#ifdef DEBUG
-				bpf_printk("Outer unknown %x\n", outer_ip_type);
-			#endif
+			// #ifdef DEBUG
+			// 	bpf_printk("Outer unknown ip type %x\n", outer_ip_type);
+			// #endif
 			goto out;
 	}
 
@@ -128,6 +137,7 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 		bpf_printk("Outer GRE flags=0x%x proto=%x\n", outer_grehdr->flags, outer_grehdr->proto);
 	#endif
 
+	// here is all the headers we need to chop off before sending the packet back
 	void *cutoff_pos = dataptr;
 
 	// parse inner IP header
@@ -138,15 +148,13 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 		if (dataptr + 20 > data_end) return -1; // workaround kernel static check
 		if (dataptr + ip_header_size > data_end) return -1;
 		dataptr += ip_header_size;
-		int inner_ip_proto = inner_iphdr -> protocol;
+		__u8 inner_ip_proto = inner_iphdr -> protocol;
 		#ifdef DEBUG
-			bpf_printk("IPv4 packet_size=0x%x\n", ip_header_size);
-			bpf_printk("IPv4 proto=0x%x\n", inner_ip_proto);
+			bpf_printk("IPv4 packet_size=0x%x, proto=0x%x\n", ip_header_size, inner_ip_proto);
 		#endif
 
 		// check if it is a GRE encapsulated in an IPv4 packet
 		if (outer_ip_type != 4 || inner_ip_proto != IPPROTO_GRE) goto out;
-
 
 		// get the inner GRE header
 		if (dataptr + sizeof(struct gre_hdr) > data_end) return -1;
@@ -161,7 +169,6 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 		// * proto == 0
 		// * ip address match
 		// 
-		// 
 		if (
 			inner_grehdr -> proto != 0
 			|| inner_iphdr -> saddr != outer_iphdr -> daddr
@@ -171,15 +178,11 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 			bpf_printk("GRE4 keepalive received!\n");
 		#endif
 
-		// remove the header and send the packet back
-		if (bpf_xdp_adjust_head(ctx, (int)(cutoff_pos - data))) return -1;
-		action = XDP_TX;
-
 	} else if (outer_grehdr->proto == bpf_htons(ETH_P_IPV6)) {
 		if (dataptr + sizeof(struct ipv6hdr) + 1 > data_end) return -1;
 		struct ipv6hdr *inner_ipv6hdr = (struct ipv6hdr *)(dataptr);
 		dataptr += sizeof(struct ipv6hdr);
-		int inner_ip_proto = inner_ipv6hdr -> nexthdr;
+		__u8 inner_ip_proto = inner_ipv6hdr -> nexthdr;
 		#ifdef DEBUG
 			bpf_printk("IPv6 proto=0x%x\n", inner_ip_proto);
 		#endif
@@ -195,8 +198,7 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 			bpf_printk("Inner is GRE6, proto %x\n", inner_grehdr -> proto);
 		#endif
 
-
-		// check if the GRE header is keepalive
+		// check if the GRE packet is a keepalive packet
 		if (
 			inner_grehdr -> proto != 0xdd86 // seems to be the case for MikroTik RouterOS, TODO: verify compatibility with other vendors
 			|| !compare_ipv6_address(&(outer_ipv6hdr -> saddr), &(inner_ipv6hdr -> daddr))
@@ -206,10 +208,6 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 			bpf_printk("GRE6 keepalive received!\n");
 		#endif
 
-		// remove the header and send the packet back
-		if (bpf_xdp_adjust_head(ctx, (int)(cutoff_pos - data))) return -1;
-		action = XDP_TX;
-
 	} else {
 		// unknown protocol
 		#ifdef DEBUG
@@ -218,6 +216,8 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 		goto out;
 	}
 
+	// remove the header and send the packet back
+	if (bpf_xdp_adjust_head(ctx, (int)(cutoff_pos - data_start))) return -1;
 	action = XDP_TX;
 
 out:
