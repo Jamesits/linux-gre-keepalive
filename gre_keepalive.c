@@ -73,27 +73,23 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 	struct iphdr *outer_iphdr;
 	struct ipv6hdr *outer_ipv6hdr;
 
-	// if the packet is from GREv4 (tunnel mode gre), then it starts straight with IP header
-	if ((dataptr + 1) > data_end) return -1;
-	if ((((__u8 *)dataptr)[0] & 0xF0) == 0x40) {
+	// if the packet is from GREv6 (tunnel mode ip6gre), then it starts with an ethernet header:
+	// * dst MAC address (6 bytes)
+	// * src MAC address (6 bytes)
+	// * ethernet proto (0x86dd, 2 bytes)
+	// Then comes IPv6 header.
+	// So we skip the first 12 bytes and verify ethernet proto field and IPv6 header version field
+	if ((dataptr + 15) > data_end) goto out;
+	if (
+		((__u8 *)dataptr)[12] == 0x86
+		&& ((__u8 *)dataptr)[13] == 0xdd
+		&& (((__u8 *)dataptr)[14] & 0xF0) == 0x60
+		) {
+		outer_ip_type = 6;
+		dataptr += 14;
+	} else if ((((__u8 *)dataptr)[0] & 0xF0) == 0x40) {
+		// if the packet is from GREv4 (tunnel mode gre), then it starts straight with IP header
 		outer_ip_type = 4;
-	} else {
-		// if the packet is from GREv6 (tunnel mode ip6gre), then it starts with an ethernet header:
-		// * dst MAC address (6 bytes)
-		// * src MAC address (6 bytes)
-		// * ethernet proto (0x86dd, 2 bytes)
-		// Then comes IPv6 header.
-		// So we skip the first 12 bytes and verify ethernet proto field and IPv6 header version field
-		if ((dataptr + 15) > data_end) goto out;
-		dataptr += 12;
-		if (
-			((__u8 *)dataptr)[0] == 0x86
-			&& ((__u8 *)dataptr)[1] == 0xdd
-			&& (((__u8 *)dataptr)[2] & 0xF0) == 0x60
-			) {
-			outer_ip_type = 6;
-		}
-		dataptr += 2;
 	}
 
 	#ifdef DEBUG
