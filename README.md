@@ -27,7 +27,7 @@ Loading this program on other types of interfaces is undefined behavior.
 Debian:
 
 ```shell
-sudo apt install clang llvm libelf-dev gcc-multilib linux-headers-$(dpkg --print-architecture)
+sudo apt install build-essential clang llvm libelf-dev gcc-multilib linux-headers-$(dpkg --print-architecture)
 ```
 
 ### Building the eBPF program
