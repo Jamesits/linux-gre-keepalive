@@ -22,7 +22,7 @@ if [ $EUID -ne 0 ]; then
     exit 1
 fi
 
-cd "$( dirname "${BASH_SOURCE[0]}" )"
+cd "$( dirname "${BASH_SOURCE[0]}" )"/..
 
 modprobe ip_gre
 
