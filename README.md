@@ -7,7 +7,7 @@ This eBPF program adds high-performance reply-only GRE keepalive support for Lin
 | Protocol 	| Linux name 	| XDP Executable   	| Tested Vendors  	| Comments    	|
 |----------	|------------	|------------------	|-----------------	|-------------	|
 | GRE      	| gre        	| keepalive_gre.o  	| Cisco, MikroTik 	|             	|
-| GRE6     	| ip6gre     	| keepalive_gre6.o 	|                 	|             	|
+| GRE6     	| ip6gre     	| keepalive_gre6.o 	| MikroTik       	|             	|
 
 ## Usage
 
