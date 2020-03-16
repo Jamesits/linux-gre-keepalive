@@ -7,7 +7,7 @@ This eBPF program adds high-performance reply-only GRE keepalive support for Lin
 Assume you have set up the GRE tunnel as `gre0`. To enable GRE keepalive:
 
 ```shell
-ip link set dev gre0 xdp object build/gre_keepalive.o
+ip link set dev gre0 xdp object build/keepalive_gre.o
 ```
 
 Note that this command must be invoked every time a new GRE tunnel is set up.
@@ -41,7 +41,7 @@ make all
 View compiled bytecode:
 
 ```shell
-llvm-objdump -S build/gre_keepalive.o
+llvm-objdump -S build/keepalive_gre.o
 ```
 
 Enabling debugging output:
