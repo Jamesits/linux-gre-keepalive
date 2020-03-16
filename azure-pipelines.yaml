@@ -22,7 +22,7 @@ jobs:
       submodules: 'recursive'
 
     - bash: |
-        sudo apt install build-essential clang llvm libelf-dev gcc-multilib linux-headers-$(dpkg --print-architecture)
+        sudo apt install build-essential clang llvm libelf-dev gcc-multilib linux-headers-$(uname -r)
       displayName: 'Install dependencies'
 
     - bash: |
