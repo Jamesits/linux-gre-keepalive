@@ -20,11 +20,16 @@ CFLAGS ?= -I$(LIBBPF_DIR)/build/usr/include/ -g
 CFLAGS += -I../headers/
 LDFLAGS ?= -L$(LIBBPF_DIR)
 
+LIBS = -l:libbpf.a -lelf $(USER_LIBS)
+
 BPF_CFLAGS ?= -I$(LIBBPF_DIR)/build/usr/include/ -I../headers/
 BPF_CFLAGS += -Wall -Wno-unused-value -Wno-pointer-sign -Wno-compare-distinct-pointer-types
 BPF_CFLAGS_EXTRA ?= -Werror -Wno-visibility
+BPF_CFLAGS_USER ?=
 
-LIBS = -l:libbpf.a -lelf $(USER_LIBS)
+ifeq ($(DEBUG), 1)
+BPF_CFLAGS_USER += -DDEBUG
+endif
 
 all: llvm-check $(XDP_OBJ)
 
@@ -61,6 +66,6 @@ $(XDP_OBJ): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c  $(BUILD_DIR) $(OBJECT_LIBBPF) Make
 	$(CLANG) -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
-	    $(BPF_CFLAGS) $(BPF_CFLAGS_EXTRA) \
+	    $(BPF_CFLAGS) $(BPF_CFLAGS_EXTRA) $(BPF_CFLAGS_USER) \
 	    -O2 -emit-llvm -c -g -o ${@:.o=.ll} $<
 	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}

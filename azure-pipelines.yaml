@@ -1,0 +1,65 @@
+name: $(Date:yyyyMMdd).$(Rev:r)
+
+trigger:
+  batch: true
+  branches:
+    include: [ "*" ]
+  paths:
+    exclude: [ "README.md" ]
+
+jobs:
+  - job: build
+    displayName: "Build"
+    pool:
+      vmImage: "ubuntu-latest"
+    workspace:
+      clean: all
+    timeoutInMinutes: 10
+
+    steps:
+    - checkout: 'self'
+      clean: true
+      submodules: 'recursive'
+
+    - bash: |
+        sudo apt install build-essential clang llvm libelf-dev gcc-multilib linux-headers-$(dpkg --print-architecture)
+      displayName: 'Install dependencies'
+
+    - bash: |
+        make DEBUG=1 all
+      displayName: 'Build (debug)'
+
+    - bash: |
+        rm -r ${BUILD_ARTIFACTSTAGINGDIRECTORY}/*
+        cp build/* ${BUILD_ARTIFACTSTAGINGDIRECTORY}
+      displayName: 'Copy artifacts (debug)'
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifacts (debug)'
+      inputs:
+        artifactName: 'debug'
+
+    - bash: |
+        scripts/try_load.sh gre build/keepalive_gre.o
+        scripts/try_load.sh ip6gre build/keepalive_gre6.o
+      displayName: 'Test (debug)'
+
+    - bash: |
+        rm -r build/*
+        make all
+      displayName: 'Build (production)'
+
+    - bash: |
+        rm -r ${BUILD_ARTIFACTSTAGINGDIRECTORY}/*
+        cp build/* ${BUILD_ARTIFACTSTAGINGDIRECTORY}
+      displayName: 'Copy artifacts (production)'
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifacts (production)'
+      inputs:
+        artifactName: 'production'
+
+    - bash: |
+        scripts/try_load.sh gre build/keepalive_gre.o
+        scripts/try_load.sh ip6gre build/keepalive_gre6.o
+      displayName: 'Test (production)'
