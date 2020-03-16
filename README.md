@@ -13,7 +13,7 @@ This eBPF program adds high-performance reply-only GRE keepalive support for Lin
 
 ## Usage
 
-Assume you have set up the GRE tunnel as `gre0`. To enable GRE keepalive, invoke this command every time a GRE tunnel is created:
+Simply load the correct XDP executable on the tunnel interface you just created. For example, assume you have set up the GRE tunnel as `gre0`, to enable GRE keepalive:
 
 ```shell
 ip link set dev gre0 xdp object build/keepalive_gre.o
@@ -25,7 +25,7 @@ To disable it without removing the tunnel interface:
 ip link set dev gre0 xdp off
 ```
 
-Loading a program on other types of interfaces is an undefined behavior.
+Loading an executable on other types of interfaces is considered an undefined behavior.
 
 ## Caveats
 
@@ -42,7 +42,7 @@ interface Tunnel10
  tunnel mode gre ip
 ```
 
-### GRE6 (ip6gre) support
+### GRE6 (ip6gre) keepalive support
 
 GRE6 keepalive is not supported by:
 
