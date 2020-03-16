@@ -41,6 +41,7 @@ jobs:
         artifactName: 'debug'
 
     - bash: |
+        set -eu
         scripts/try_load.sh gre build/keepalive_gre.o
         scripts/try_load.sh ip6gre build/keepalive_gre6.o
       displayName: 'Test (debug)'
@@ -61,6 +62,7 @@ jobs:
         artifactName: 'production'
 
     - bash: |
+        set -eu
         scripts/try_load.sh gre build/keepalive_gre.o
         scripts/try_load.sh ip6gre build/keepalive_gre6.o
       displayName: 'Test (production)'
