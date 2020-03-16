@@ -1,6 +1,6 @@
 #pragma once
 #ifndef __COMMON_H__
-#define _COMMON_H__
+#define __COMMON_H__
 
 struct gre_hdr {
 	__be16 flags;
