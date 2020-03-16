@@ -2,6 +2,8 @@
 
 This eBPF program adds high-performance reply-only GRE keepalive support for Linux kernel.
 
+[![Build Status](https://dev.azure.com/nekomimiswitch/General/_apis/build/status/linux-gre-keepalive?branchName=master)](https://dev.azure.com/nekomimiswitch/General/_build/latest?definitionId=78&branchName=master)
+
 ## Compatiblity
 
 | Protocol 	| Linux name 	| XDP Executable   	| Tested Vendors  	| Comments    	|

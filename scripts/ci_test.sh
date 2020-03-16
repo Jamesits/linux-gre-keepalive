@@ -17,6 +17,11 @@ try_load() {
     ip link del ${TUNNEL_INTERFACE_NAME}
 }
 
+if [ $EUID -ne 0 ]; then
+    echo "This script must be run as root"
+    exit 1
+fi
+
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 modprobe ip_gre

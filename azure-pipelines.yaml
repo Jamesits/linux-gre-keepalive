@@ -41,7 +41,7 @@ jobs:
         artifactName: 'debug'
 
     - bash: |
-        scripts/ci_test.sh
+        sudo -E scripts/ci_test.sh
       displayName: 'Test (debug)'
 
     - bash: |
@@ -60,5 +60,5 @@ jobs:
         artifactName: 'production'
 
     - bash: |
-        scripts/ci_test.sh
+        sudo -E scripts/ci_test.sh
       displayName: 'Test (production)'
