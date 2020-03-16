@@ -2,15 +2,20 @@
 
 This eBPF program adds high-performance reply-only GRE keepalive support for Linux kernel.
 
+## Compatiblity
+
+| Protocol 	| Linux name 	| XDP Executable   	| Tested Vendors  	| Comments    	|
+|----------	|------------	|------------------	|-----------------	|-------------	|
+| GRE      	| gre        	| keepalive_gre.o  	| Cisco, MikroTik 	|             	|
+| GRE6     	| ip6gre     	| keepalive_gre6.o 	|                 	|             	|
+
 ## Usage
 
-Assume you have set up the GRE tunnel as `gre0`. To enable GRE keepalive:
+Assume you have set up the GRE tunnel as `gre0`. To enable GRE keepalive, invoke this command every time a GRE tunnel is created:
 
 ```shell
 ip link set dev gre0 xdp object build/keepalive_gre.o
 ```
-
-Note that this command must be invoked every time a new GRE tunnel is set up.
 
 To disable it without removing the tunnel interface:
 
@@ -18,21 +23,40 @@ To disable it without removing the tunnel interface:
 ip link set dev gre0 xdp off
 ```
 
-Loading this program on other types of interfaces is undefined behavior.
+Loading a program on other types of interfaces is an undefined behavior.
+
+## Caveats
+
+### GRE on Cisco IOS XE
+
+On Cisco IOS XE, you must explicitly configure an ip address or an ipv6 address to make the GRE tunnel actually send something. If you don't configure IP addresses, `debug tunnel keepalive` will still show keepalive packets being sent, but the other end won't receive anything. A valid configuration example:
+
+```
+interface Tunnel10
+ ip address 10.0.0.1 255.255.255.0
+ keepalive 1 2
+ tunnel source GigabitEthernet1
+ tunnel destination your.other.end.ip.address
+ tunnel mode gre ip
+```
+
+Keepalive over GRE IPv6 is by IOS XE.
+
+### GRE6 (ip6gre) support
+
+GRE6 keepalive is not supported by:
+
+* [Cisco IOS XE](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29)
+* [Juniper JunOS](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html)
+
+MikroTik RouterOS implements their own GRE IPv6 keepalive with inner GRE header's proto field set to `0x86dd`. This have been implemented by us.
 
 ## Building
 
-### Dependencies
-
-Debian:
+Assume we are on a Debian 10.
 
 ```shell
 sudo apt install build-essential clang llvm libelf-dev gcc-multilib linux-headers-$(dpkg --print-architecture)
-```
-
-### Building the eBPF program
-
-```shell
 make all
 ```
 
@@ -56,31 +80,6 @@ Then view debug output after enabling it by:
 ```shell
 cat /sys/kernel/debug/tracing/trace_pipe
 ```
-
-## Compatiblity
-
-### Cisco
-
-On Cisco IOS XE, you must explicitly configure an ip address or an ipv6 address to make the GRE tunnel actually send something. If you don't configure IP addresses, `debug tunnel keepalive` will still show keepalive packets being sent, but the other end won't receive anything. A valid configuration example:
-
-```
-interface Tunnel10
- ip address 10.0.0.1 255.255.255.0
- keepalive 1 2
- tunnel source GigabitEthernet1
- tunnel destination your.other.end.ip.address
- tunnel mode gre ip
-```
-
-Keepalive over GRE IPv6 is [not supported](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29) by IOS XE.
-
-### Juniper
-
-Keepalive over GRE IPv6 is [not supported](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html) by JunOS.
-
-### MikroTik
-
-RouterOS implements their own GRE IPv6 keepalive with inner GRE header's proto field set to `0x86dd`. This have been implemented by us.
 
 ## References
 

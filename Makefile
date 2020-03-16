@@ -33,8 +33,7 @@ all: llvm-check $(XDP_OBJ)
 clean:
 	rm -rf $(LIBBPF_DIR)/build
 	$(MAKE) -C $(LIBBPF_DIR) clean
-	rm -f $(XDP_OBJ)
-	rm -f *.ll
+	rm -rf $(BUILD_DIR)
 	rm -f *~
 
 llvm-check: $(CLANG) $(LLC)
