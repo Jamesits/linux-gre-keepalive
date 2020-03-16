@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause)
 
-XDP_TARGETS  := gre_keepalive
-XDP_C = ${XDP_TARGETS:=.c}
-XDP_OBJ = ${XDP_C:.c=.o}
+SRC_DIR = src
+BUILD_DIR = build
+
+XDP_C = $(wildcard $(SRC_DIR)/*.c)
+XDP_OBJ = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(XDP_C))
 
 USER_LIBS :=
 EXTRA_DEPS :=
@@ -41,6 +43,9 @@ llvm-check: $(CLANG) $(LLC)
 		else true; fi; \
 	done
 
+$(BUILD_DIR): 
+	mkdir $(BUILD_DIR)
+
 $(OBJECT_LIBBPF):
 	@if [ ! -d $(LIBBPF_DIR) ]; then \
 		echo "Error: Need libbpf submodule"; \
@@ -51,7 +56,7 @@ $(OBJECT_LIBBPF):
 		mkdir -p build; DESTDIR=build $(MAKE) install_headers; \
 	fi
 
-$(XDP_OBJ): %.o: %.c  $(OBJECT_LIBBPF) Makefile $(EXTRA_DEPS)
+$(XDP_OBJ): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c  $(BUILD_DIR) $(OBJECT_LIBBPF) Makefile $(EXTRA_DEPS)
 	$(CLANG) -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
