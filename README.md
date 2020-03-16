@@ -40,8 +40,6 @@ interface Tunnel10
  tunnel mode gre ip
 ```
 
-Keepalive over GRE IPv6 is by IOS XE.
-
 ### GRE6 (ip6gre) support
 
 GRE6 keepalive is not supported by:
