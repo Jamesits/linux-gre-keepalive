@@ -21,6 +21,8 @@ CFLAGS += -I../headers/
 LDFLAGS ?= -L$(LIBBPF_DIR)
 
 BPF_CFLAGS ?= -I$(LIBBPF_DIR)/build/usr/include/ -I../headers/
+BPF_CFLAGS += -Wall -Wno-unused-value -Wno-pointer-sign -Wno-compare-distinct-pointer-types
+BPF_CFLAGS_EXTRA ?= -Werror -Wno-visibility
 
 LIBS = -l:libbpf.a -lelf $(USER_LIBS)
 
@@ -60,11 +62,6 @@ $(XDP_OBJ): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c  $(BUILD_DIR) $(OBJECT_LIBBPF) Make
 	$(CLANG) -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
-	    $(BPF_CFLAGS) \
-	    -Wall \
-	    -Wno-unused-value \
-	    -Wno-pointer-sign \
-	    -Wno-compare-distinct-pointer-types \
-	    -Werror \
+	    $(BPF_CFLAGS) $(BPF_CFLAGS_EXTRA) \
 	    -O2 -emit-llvm -c -g -o ${@:.o=.ll} $<
 	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
