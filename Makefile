@@ -50,7 +50,7 @@ llvm-check: $(CLANG) $(LLC)
 	done
 
 $(BUILD_DIR): 
-	mkdir $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 
 $(OBJECT_LIBBPF):
 	@if [ ! -d $(LIBBPF_DIR) ]; then \
