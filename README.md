@@ -4,6 +4,12 @@ This eBPF program adds high-performance reply-only GRE keepalive support for Lin
 
 [![Build Status](https://dev.azure.com/nekomimiswitch/General/_apis/build/status/linux-gre-keepalive?branchName=master)](https://dev.azure.com/nekomimiswitch/General/_build/latest?definitionId=78&branchName=master)
 
+Note: If you don't want to install anything and don't care about some potential security problems, just enable the following 2 options to get native GRE keepalive support on Linux:
+```
+sysctl net.ipv4.conf.default.accept_local=1
+sysctl net.ipv4.conf.all.accept_local=1
+```
+
 ## Compatiblity
 
 | Protocol 	| Linux name 	| XDP Executable   	| Tested Vendors  	| Comments    	|
