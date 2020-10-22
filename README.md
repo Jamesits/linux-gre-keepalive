@@ -53,7 +53,7 @@ interface Tunnel10
 GRE6 keepalive is not supported by:
 
 * [Cisco IOS XE](https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/interface/configuration/xe-16-6/ir-xe-16-6-book/ir-gre-ipv6-tunls-xe.html#GUID-B8369497-671A-4B51-A749-A81971011A29)
-* [Juniper JunOS](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html)
+* [Juniper Junos OS](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html)
 
 MikroTik RouterOS implements their own GRE IPv6 keepalive with inner GRE header's proto field set to `0x86dd`. This have been implemented by us.
 
