@@ -14,7 +14,7 @@ sysctl net.ipv4.conf.all.accept_local=1
 
 | Protocol 	| Linux name 	| XDP Executable   	| Tested Vendors  	| Comments    	|
 |----------	|------------	|------------------	|-----------------	|-------------	|
-| GRE      	| gre        	| keepalive_gre.o  	| Cisco, MikroTik 	|             	|
+| GRE      	| gre        	| keepalive_gre.o  	| Cisco, MikroTik, Velocloud 	| define VELOCLOUD_KEEPALIVE_SUPPORT for Velocloud support            	|
 | GRE6     	| ip6gre     	| keepalive_gre6.o 	| MikroTik       	|             	|
 
 ## Usage
@@ -56,6 +56,12 @@ GRE6 keepalive is not supported by:
 * [Juniper Junos OS](https://www.juniper.net/documentation/en_US/junos/topics/concept/gre-keepalive-time-overview.html)
 
 MikroTik RouterOS implements their own GRE IPv6 keepalive with inner GRE header's proto field set to `0x86dd`. This have been implemented by us.
+
+### GRE on Velocloud Edge towards simulated Zscaler endpoint
+
+By capturing traffic it seems The velocloud edge (firmware 4.3.0) isn't equal as cisco's implementation for keepalives.
+Cisco uses the reversed remote/local physical tunnel IP's as inner IP for keepalives, where Velocloud uses actual inner tunnel IP's for keepalives.
+Although not thoroughly tested yet, the Zscaler tunnel is showing to green in Velocloud orchestrator (VCO).
 
 ## Building
 

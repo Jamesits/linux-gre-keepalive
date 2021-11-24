@@ -19,6 +19,10 @@
 // #define DEBUG
 // enable packet header dump
 // #define DEBUG_PRINT_HEADER_SIZE 32
+// enable Velocloud (firmware 4.3.0) to Zscaler GRE tunnel keepalive support
+// by disabling cisco outer-saddr - inner-daddr and outer-daddr - inner-saddr check
+// as velocloud uses actual physical and tunnel IP's for keepalive
+// #define VELOCLOUD_KEEPALIVE_SUPPORT
 
 char _license[4] SEC("license") = "GPL";
 
@@ -108,8 +112,10 @@ int xdp_gre_keepalive_func(struct xdp_md *ctx)
 		// 
 		if (
 			inner_grehdr -> proto != 0
+			#ifndef VELOCLOUD_KEEPALIVE_SUPPORT
 			|| inner_iphdr -> saddr != outer_iphdr -> daddr
 			|| inner_iphdr -> daddr != outer_iphdr -> saddr
+			#endif
 			) goto out;
 		#ifdef DEBUG
 			bpf_printk("GRE4 keepalive received!\n");
